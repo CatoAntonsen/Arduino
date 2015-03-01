@@ -9,7 +9,6 @@ LCD4Bit_mod lcd = LCD4Bit_mod(2);
 //Key message
 int  adc_key_val[5] = {30, 150, 360, 535, 760 };
 int ipNumber[] = { 192, 168, 1, 177 };
-bool ipChanged = true;
 int xpos = 0;
 long unsigned lastMillis;
 
@@ -51,7 +50,6 @@ void loop() {
       oldkey = key;
       if (key >= 0) {
         processKey(key, 1);
-        printIp();
       }
     }
     lastMillis = millis();
@@ -60,11 +58,10 @@ void loop() {
     adc_key_in = analogRead(0);    // read the value from the sensor
     key = get_key(adc_key_in);		        // convert into key press
     if (key >= 0 && key == oldkey) {
-        if (lastMillis + 500 < millis()) {
-          Serial.println("Holding: " + String(key));
-          processKey(key, 10);
-          printIp();
-        }
+      if (lastMillis + 750 < millis()) {
+        Serial.println("Holding: " + String(key));
+        processKey(key, 10);
+      }
     }
   }
 }
@@ -91,6 +88,8 @@ int get_key(unsigned int input)
 
 
 void processKey(int key, int numStep) {
+  bool ipChanged = false;
+
   switch (key)
   {
     case 0: // Right
@@ -114,21 +113,22 @@ void processKey(int key, int numStep) {
     case 4: // Select
       break;
   }
+
+  if (ipChanged) printIp();
 }
 
 void printIp() {
-  if (ipChanged) {
-    lcd.cursorTo(2, 0);  //line=2, x=0
-    for (int i = 0; i < 4; i++) {
-      String s = String(ipNumber[i]);
-      int sLength = s.length() + 1;
-      char charBuff[sLength];
-      s.toCharArray(charBuff, sLength);
-      lcd.printIn(charBuff);
-      if (i < 3) lcd.printIn(".");
-    }
-    ipChanged = false;
+  int totalLength = 0;
+  lcd.cursorTo(2, 0);  //line=2, x=0
+  for (int i = 0; i < 4; i++) {
+    String s = String(ipNumber[i]);
+    int sLength = s.length() + 1;
+    char charBuff[sLength];
+    s.toCharArray(charBuff, sLength);
+    lcd.printIn(charBuff);
+    if (i < 3) lcd.printIn(".");
   }
+  lcd.printIn("  ");
 }
 
 
